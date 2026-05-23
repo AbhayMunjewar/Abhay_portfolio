@@ -27,7 +27,7 @@ export default function Home() {
       import("gsap").then((m) => m.gsap),
       import("gsap/ScrollTrigger").then((m) => m.ScrollTrigger),
       import("three"),
-      import("lenis"),
+      import("@studio-freight/lenis"),
     ]).then(([gsap, ScrollTrigger, THREE, { default: Lenis }]) => {
       if (destroyed) {
         return;
@@ -39,7 +39,7 @@ export default function Home() {
       const addListener = (
         target: EventTarget,
         type: string,
-        handler: EventListenerOrEventListenerObject
+        handler: (event: Event) => void
       ) => {
         target.addEventListener(type, handler);
         removers.push(() => target.removeEventListener(type, handler));
@@ -70,7 +70,7 @@ export default function Home() {
         easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       });
       function raf(time: number) {
-        if (destroyed) {
+        if (destroyed || !lenis) {
           return;
         }
 
@@ -84,7 +84,8 @@ export default function Home() {
       const cursor = cursorRef.current;
       const follower = followerRef.current;
       if (cursor && follower) {
-        const onMouseMove = (e: MouseEvent) => {
+        const onMouseMove = (event: Event) => {
+          const e = event as MouseEvent;
           gsap.to(cursor, { x: e.clientX, y: e.clientY, duration: 0.1 });
           gsap.to(follower, {
             x: e.clientX - 20,
@@ -373,7 +374,8 @@ export default function Home() {
           mouseY = 0,
           targetX = 0,
           targetY = 0;
-        const onRobotMouseMove = (e: MouseEvent) => {
+        const onRobotMouseMove = (event: Event) => {
+          const e = event as MouseEvent;
           mouseX = e.clientX / window.innerWidth - 0.5;
           mouseY = e.clientY / window.innerHeight - 0.5;
         };
@@ -405,6 +407,10 @@ export default function Home() {
           particles.rotation.y += 0.001;
           ring1.rotation.z += 0.005;
           ring2.rotation.x += 0.003;
+          if (!renderer) {
+            return;
+          }
+
           renderer.render(scene, camera);
         };
         animate(0);
@@ -414,7 +420,7 @@ export default function Home() {
             return;
           }
 
-          if (!container) return;
+          if (!container || !renderer) return;
           camera.aspect = container.clientWidth / container.clientHeight;
           camera.updateProjectionMatrix();
           renderer.setSize(container.clientWidth, container.clientHeight);
@@ -510,7 +516,8 @@ export default function Home() {
 
       // Hover card parallax
       document.querySelectorAll<HTMLElement>(".hover-card").forEach((card) => {
-        const onMove = (e: MouseEvent) => {
+        const onMove = (event: Event) => {
+          const e = event as MouseEvent;
           const rect = card.getBoundingClientRect();
           const x = (e.clientX - rect.left) / rect.width - 0.5;
           const y = (e.clientY - rect.top) / rect.height - 0.5;
